@@ -1,0 +1,143 @@
+% ============================================================
+%  PWr Beamer template – example presentation
+%  Compile: pdfLaTeX (Overleaf default)
+%  Files: main.tex, pwr-beamer.sty, pwr_logo.png, pwr_partnerzy.png
+% ============================================================
+
+\documentclass[aspectratio=169, 11pt]{beamer}
+\usepackage{pwr-beamer}
+
+% ---- Metadata ----
+% Short title in [...] is shown in the small header line on every slide
+\title[Krótki tytuł prezentacji]{Pełny tytuł prezentacji}
+\subtitle{Podtytuł (opcjonalnie)}
+\course{Nazwa kursu -- Prezentacja 1}          % optional
+\author{Imię Nazwisko (nr indeksu)}
+\supervisor{dr inż. Imię Nazwisko}              % optional, remove for no supervisor line
+\faculty{Wydział Informatyki i Telekomunikacji}
+\program{Informatyka Stosowana, studia II stopnia}  % optional
+\date{Wrocław, 2026/2027}
+
+% ============================================================
+\begin{document}
+% ============================================================
+
+% Title slide. For manual line breaks pass the title as an option:
+% \pwrtitleframe[Pierwsza linia tytułu\\ druga linia]
+\pwrtitleframe
+
+% ------------------------------------------------------------
+\begin{frame}{Plan}
+  \Large
+  \begin{enumerate}\itemsep0.5em
+    \item Pierwsza część
+    \item Druga część
+    \item Podsumowanie
+  \end{enumerate}
+\end{frame}
+
+% ------------------------------------------------------------
+\pwrsection{Pierwsza część}
+
+% ------------------------------------------------------------
+\begin{frame}{Slajd z listą}
+  \begin{itemize}\itemsep0.4em
+    \item Punkt pierwszy z \textbf{wyróżnieniem}
+    \item Punkt drugi z \alert{kolorem akcentu}
+    \item Punkt trzeci
+  \end{itemize}
+  \src{Autor, \textit{Tytuł źródła}, rok.}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Bloki}
+  \begin{block}{Blok podstawowy}
+    Np. cel pracy albo kluczowa definicja.
+  \end{block}
+  \vspace{0.2cm}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \begin{exampleblock}{Blok przykładu}
+        \begin{itemize}
+          \item np. ,,w zakresie''
+        \end{itemize}
+      \end{exampleblock}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{alertblock}{Blok szary}
+        \begin{itemize}
+          \item np. ,,poza zakresem''
+        \end{itemize}
+      \end{alertblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Rysunek i tekst w dwóch kolumnach}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \centering
+      \begin{tikzpicture}[font=\small]
+        \draw[thick, PwrRed, fill=PwrSand!60] (0,0) circle (0.5);
+        \draw[-{Stealth}, very thick, PwrDark] (0.6,0) -- (3,0);
+        \fill[black!25] (3.2,-0.8) rectangle (3.5,0.8);
+      \end{tikzpicture}
+      % Or an image: \includegraphics[width=\linewidth]{rysunek.png}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}\itemsep0.4em
+        \item[] \textbf{Idea:} opis
+        \item[] \textbf{Zaleta:} opis
+        \item[] \textbf{Wada:} opis
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  % Mark AI-assisted figures/tables (WIT AI guidelines):
+  \nsi{Rysunek}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Tabela}
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    \textbf{Kolumna 1} & \textbf{Kolumna 2} & \textbf{Kolumna 3} \\
+    \midrule
+    wartość & wartość & wartość \\
+    wartość & wartość & wartość \\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Podsumowanie}
+  \begin{itemize}\itemsep0.5em
+    \item Najważniejszy wniosek
+    \item Drugi wniosek
+  \end{itemize}
+  \vspace{0.8cm}
+  \begin{center}
+    {\Large\color{PwrRed}\bfseries Dziękuję za uwagę!}
+  \end{center}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Literatura}
+  \footnotesize
+  \begin{itemize}\itemsep0.2em
+    \item A. Autor, \textit{Tytuł książki}, Wydawnictwo, rok.
+    \item B. Autor i in., \textit{Tytuł artykułu}, Czasopismo 1(2), rok.
+  \end{itemize}
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Wykorzystanie narzędzi AI}
+  \begin{itemize}\itemsep0.4em
+    \item \textbf{Narzędzie:} ...
+    \item \textbf{Zakres:} ...
+    \item \textbf{Oznaczenia:} elementy przygotowane z użyciem NSI opisano w prawym dolnym rogu slajdu
+  \end{itemize}
+\end{frame}
+
+\end{document}

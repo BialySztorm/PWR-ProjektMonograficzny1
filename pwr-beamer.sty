@@ -1,0 +1,151 @@
+% ============================================================
+%  pwr-beamer.sty
+%  Beamer style following the official PWr PowerPoint template
+%  (SIW PWr 2025): red sidebar with the university logo,
+%  white content area, black titles.
+%
+%  Required files next to the .tex:
+%    pwr_logo.png       – white PWr logo (sidebar)
+%    pwr_partnerzy.png  – partner logos card (title slide)
+%
+%  Usage (in the preamble, after \documentclass{beamer}):
+%    \usepackage{pwr-beamer}
+% ============================================================
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{pwr-beamer}[2026/10/03 PWr Beamer style]
+
+% ---- Packages ----
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[T1]{fontenc}
+\RequirePackage[polish]{babel}
+% SIW PWr primary typeface is Zapf Humanist; URW Classico is its free equivalent.
+\IfFileExists{classico.sty}{\RequirePackage{classico}}{\RequirePackage{lmodern}}
+\RequirePackage{graphicx}
+\RequirePackage{xcolor}
+\RequirePackage{booktabs}
+\RequirePackage{amsmath}
+\RequirePackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, decorations.pathreplacing, calc}
+
+% ---- Colors (SIW PWr) ----
+\definecolor{PwrSidebar}{HTML}{B11D09}   % sidebar color from the official template
+\definecolor{PwrRed}{HTML}{9A342D}       % Pantone 484 – main PWr color
+\definecolor{PwrDark}{HTML}{6E241F}
+\definecolor{PwrSand}{HTML}{F1D1A2}      % Pantone 156 – supporting color
+\definecolor{SlateGray}{RGB}{90,90,90}
+
+% ---- Geometry ----
+\newlength{\pwrsidebarw}\setlength{\pwrsidebarw}{1.15cm}
+\newlength{\pwrtitlesidebarw}\setlength{\pwrtitlesidebarw}{2.45cm}
+\setbeamersize{text margin left=1.75cm, text margin right=0.7cm}
+
+% ---- Base theme ----
+\usefonttheme{professionalfonts}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamercolor{normal text}{fg=black, bg=white}
+\setbeamercolor{structure}{fg=PwrRed}
+\setbeamercolor{alerted text}{fg=PwrRed}
+\setbeamertemplate{itemize items}[circle]
+\setbeamertemplate{enumerate items}[default]
+
+% Blocks: block = red, exampleblock = red/sand, alertblock = gray
+\setbeamertemplate{blocks}[rounded][shadow=false]
+\setbeamercolor{block title}{fg=white, bg=PwrRed}
+\setbeamercolor{block body}{fg=black, bg=PwrSand!35}
+\setbeamercolor{block title example}{fg=white, bg=PwrRed}
+\setbeamercolor{block body example}{fg=black, bg=PwrSand!35}
+\setbeamercolor{block title alerted}{fg=white, bg=SlateGray}
+\setbeamercolor{block body alerted}{fg=black, bg=black!6}
+
+% ---- Content slides: sidebar with logo and slide number ----
+\setbeamertemplate{background}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[PwrSidebar] (current page.north west) rectangle
+      ([xshift=\pwrsidebarw]current page.south west);
+    \node[anchor=north] at ([xshift=0.5\pwrsidebarw, yshift=-0.2cm]current page.north west)
+      {\includegraphics[width=0.72\pwrsidebarw]{pwr_logo.png}};
+    \node[anchor=south, text=white, font=\scriptsize]
+      at ([xshift=0.5\pwrsidebarw, yshift=0.2cm]current page.south west)
+      {\insertframenumber};
+  \end{tikzpicture}}
+
+% Frame title: small header line (short title) + large black title
+\setbeamertemplate{frametitle}{%
+  \vspace*{0.25cm}
+  {\scriptsize\color{SlateGray}\insertshorttitle\par}
+  \vspace*{0.05cm}
+  {\LARGE\color{black}\insertframetitle\par}
+  \vspace*{0.1cm}}
+
+% ---- Extra metadata for the title slide ----
+\def\pwr@supervisor{}
+\def\pwr@supervisorlabel{Prowadzący}
+\def\pwr@faculty{Wydział Informatyki i Telekomunikacji}
+\def\pwr@program{}
+\def\pwr@course{}
+% \supervisor{Name} or \supervisor[Promotor]{Name}; default label: Prowadzący
+\newcommand{\supervisor}[2][Prowadzący]{\def\pwr@supervisorlabel{#1}\def\pwr@supervisor{#2}}
+\newcommand{\faculty}[1]{\def\pwr@faculty{#1}}
+\newcommand{\program}[1]{\def\pwr@program{#1}}
+\newcommand{\course}[1]{\def\pwr@course{#1}}
+
+% ---- Title slide (layout of the PWr template) ----
+% Usage: \pwrtitleframe   or   \pwrtitleframe[<title with manual line breaks>]
+\newcommand{\pwrtitleframe}[1][\inserttitle]{%
+  {%
+  \setbeamertemplate{background}{%
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[PwrSidebar] (current page.north west) rectangle
+        ([xshift=\pwrtitlesidebarw]current page.south west);
+      \node[anchor=north] at ([xshift=0.5\pwrtitlesidebarw, yshift=-0.35cm]current page.north west)
+        {\includegraphics[width=1.75cm]{pwr_logo.png}};
+      \node[anchor=south] at ([xshift=0.5\pwrtitlesidebarw, yshift=0.35cm]current page.south west)
+        {\includegraphics[width=1.75cm]{pwr_partnerzy.png}};
+    \end{tikzpicture}}%
+  \begin{frame}[plain, noframenumbering]
+    \hspace*{1.25cm}%
+    \begin{minipage}[c][0.85\paperheight][c]{11.3cm}
+      {\Large\bfseries\color{black}\raggedright #1\par}
+      \ifx\beamer@subtitle\@empty\else
+        \vspace{0.5cm}{\large\insertsubtitle\par}%
+      \fi
+      \ifx\pwr@course\@empty\else
+        \vspace{0.5cm}{\large\pwr@course\par}%
+      \fi
+      \vspace{0.7cm}
+      {\bfseries\insertauthor\par}
+      \ifx\pwr@supervisor\@empty\else
+        \vspace{0.1cm}\pwr@supervisorlabel: \pwr@supervisor\par
+      \fi
+      \vspace{0.5cm}
+      {\color{PwrRed}\pwr@faculty\par}
+      \ifx\pwr@program\@empty\else\pwr@program\par\fi
+      \vspace{0.5cm}
+      {\small\color{SlateGray}\insertdate\par}
+    \end{minipage}
+  \end{frame}
+  }}
+
+% ---- Helpers ----
+% Source line at the bottom of a slide
+\newcommand{\src}[1]{\vfill{\scriptsize\color{SlateGray}\textit{Źródło:} #1}\par\vspace{0.15cm}}
+
+% Marking of AI-assisted elements (WIT PWr AI guidelines), bottom-right corner
+\newcommand{\nsi}[1]{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=south east, font=\tiny, text=SlateGray, align=right]
+      at ([xshift=-0.3cm, yshift=0.12cm]current page.south east)
+      {#1 opracowano z~użyciem NSI (Claude, Anthropic) wg instrukcji autora};
+  \end{tikzpicture}}
+
+% Section divider slide: \pwrsection{<title>}
+\newcommand{\pwrsection}[1]{%
+  \begin{frame}[noframenumbering]
+    \vfill
+    {\Huge\bfseries\color{PwrRed}#1\par}
+    \vfill
+  \end{frame}}
+
+\endinput
