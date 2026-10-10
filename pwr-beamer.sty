@@ -25,6 +25,7 @@
 \RequirePackage{xcolor}
 \RequirePackage{booktabs}
 \RequirePackage{amsmath}
+\RequirePackage{array}
 \RequirePackage{tikz}
 \usetikzlibrary{arrows.meta, positioning, decorations.pathreplacing, calc}
 
@@ -137,8 +138,12 @@
   \begin{tikzpicture}[remember picture, overlay]
     \node[anchor=south east, font=\tiny, text=SlateGray, align=right]
       at ([xshift=-0.3cm, yshift=0.12cm]current page.south east)
-      {#1 opracowano z~użyciem NSI (Claude, Anthropic) wg instrukcji autora};
+      {#1 opracowano z~użyciem NSI (Claude, Anthropic)};
   \end{tikzpicture}}
+
+% Symbol legend under a figure/list
+\newcommand{\symbols}[1]{\par\smallskip{\footnotesize\color{SlateGray}#1\par}}
+
 
 % Section divider slide: \pwrsection{<title>}
 \newcommand{\pwrsection}[1]{%

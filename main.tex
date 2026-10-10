@@ -6,14 +6,12 @@
 
 \documentclass[aspectratio=169, 11pt]{beamer}
 \usepackage{pwr-beamer}
-
 % ---- Metadata ----
 % Short title in [...] is shown in the small header line on every slide
-\title[Krótki tytuł prezentacji]{Pełny tytuł prezentacji}
-\subtitle{Podtytuł (opcjonalnie)}
-\course{Nazwa kursu -- Prezentacja 1}          % optional
-\author{Imię Nazwisko (nr indeksu)}
-\supervisor{dr inż. Imię Nazwisko}              % optional, remove for no supervisor line
+\title[Analiza porównawcza metod CCD]{Analiza porównawcza metod ciągłej detekcji kolizji w symulacji fizycznej czasu rzeczywistego}
+\course{Projekt monograficzny - Prezentacja 1}          % optional
+\author{Andrzej Manderla (294 692)}
+\supervisor{dr inż. Piotr Sobolewski}              % optional, remove for no supervisor line
 \faculty{Wydział Informatyki i Telekomunikacji}
 \program{Informatyka Stosowana, studia II stopnia}  % optional
 \date{Wrocław, 2026/2027}
@@ -30,114 +28,348 @@
 \begin{frame}{Plan}
   \Large
   \begin{enumerate}\itemsep0.5em
-    \item Pierwsza część
-    \item Druga część
-    \item Podsumowanie
+    \item Tło: problem tunelowania i metody CCD
+    \item Problem badawczy
+    \item Cel, narzędzie i scenariusze testowe
+    \item Pytania, hipotezy i zakres pracy
   \end{enumerate}
 \end{frame}
 
 % ------------------------------------------------------------
-\pwrsection{Pierwsza część}
-
-% ------------------------------------------------------------
-\begin{frame}{Slajd z listą}
-  \begin{itemize}\itemsep0.4em
-    \item Punkt pierwszy z \textbf{wyróżnieniem}
-    \item Punkt drugi z \alert{kolorem akcentu}
-    \item Punkt trzeci
+\begin{frame}{Tło: symulacja działa w klatkach}
+  \begin{center}
+  \begin{tikzpicture}[font=\small, scale=1.0]
+    \fill[black!25] (3.0,-0.2) rectangle (3.35,2.4);
+    \node[above] at (3.18,2.4) {ściana};
+    \draw[thick, PwrRed, fill=PwrSand!60] (0.8,1.1) circle (0.35);
+    \node[below=0.45cm] at (0.8,1.1) {klatka $t$};
+    \draw[thick, PwrRed, fill=PwrSand!60] (5.6,1.1) circle (0.35);
+    \node[below=0.45cm] at (5.6,1.1) {klatka $t+\Delta t$};
+    \draw[-{Stealth}, very thick, PwrDark, dashed] (1.2,1.1) -- (5.2,1.1);
+  \end{tikzpicture}
+  \end{center}
+  \begin{itemize}
+    \item Kolizje sprawdzane tylko \textbf{w klatkach} (np. 60 razy na sekundę)
+    \item Szybki obiekt może ,,przeskoczyć'' ścianę $\Rightarrow$ \textbf{tunelowanie}
+    \item Przykład: pocisk 400 m/s przy 60 Hz $\to$ \textbf{$\approx 6{,}7$ m} między klatkami
+    \item Rozwiązanie: \textbf{ciągła detekcja kolizji (CCD)} -- sprawdza całą drogę
   \end{itemize}
-  \src{Autor, \textit{Tytuł źródła}, rok.}
-\end{frame}
-
-% ------------------------------------------------------------
-\begin{frame}{Bloki}
-  \begin{block}{Blok podstawowy}
-    Np. cel pracy albo kluczowa definicja.
-  \end{block}
-  \vspace{0.2cm}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.48\textwidth}
-      \begin{exampleblock}{Blok przykładu}
-        \begin{itemize}
-          \item np. ,,w zakresie''
-        \end{itemize}
-      \end{exampleblock}
-    \end{column}
-    \begin{column}{0.48\textwidth}
-      \begin{alertblock}{Blok szary}
-        \begin{itemize}
-          \item np. ,,poza zakresem''
-        \end{itemize}
-      \end{alertblock}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-% ------------------------------------------------------------
-\begin{frame}{Rysunek i tekst w dwóch kolumnach}
-  \begin{columns}[c,onlytextwidth]
-    \begin{column}{0.47\textwidth}
-      \centering
-      \begin{tikzpicture}[font=\small]
-        \draw[thick, PwrRed, fill=PwrSand!60] (0,0) circle (0.5);
-        \draw[-{Stealth}, very thick, PwrDark] (0.6,0) -- (3,0);
-        \fill[black!25] (3.2,-0.8) rectangle (3.5,0.8);
-      \end{tikzpicture}
-      % Or an image: \includegraphics[width=\linewidth]{rysunek.png}
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \begin{itemize}\itemsep0.4em
-        \item[] \textbf{Idea:} opis
-        \item[] \textbf{Zaleta:} opis
-        \item[] \textbf{Wada:} opis
-      \end{itemize}
-    \end{column}
-  \end{columns}
-  % Mark AI-assisted figures/tables (WIT AI guidelines):
+  \symbols{$t$ -- chwila czasu symulacji; $\Delta t$ -- krok czasowy symulacji (np.\ $1/60$\,s).}
+  \src{Ericson, \textit{Real-Time Collision Detection}, 2004.}
   \nsi{Rysunek}
 \end{frame}
 
 % ------------------------------------------------------------
-\begin{frame}{Tabela}
-  \renewcommand{\arraystretch}{1.3}
+
+\tikzset{
+  wall/.style={fill=black!25, draw=none},
+  ball/.style={thick, draw=PwrRed, fill=PwrSand!60},
+  ghost/.style={thick, draw=PwrRed!45, fill=PwrSand!25, dashed},
+  mv/.style={-{Stealth}, thick, PwrDark}}
+
+\begin{frame}{Metoda 1: substepping}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \centering
+      \begin{tikzpicture}[font=\scriptsize, scale=1.2]
+        \fill[wall] (3.1,-0.1) rectangle (3.4,2.1);
+        \foreach \x in {0.5,1.3,2.1} \draw[ghost] (\x,1.0) circle (0.3);
+        \draw[ball] (2.82,1.0) circle (0.3);
+        \node[PwrRed, font=\bfseries\small] at (2.82,1.6) {kontakt};
+        \draw[decorate, decoration={brace, amplitude=3pt, mirror}] (0.5,0.55) -- (1.3,0.55)
+          node[midway, below=3pt] {$\Delta t / n$};
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}\itemsep0.4em
+        \item[] \textbf{Idea:} krok $\Delta t$ dzielony na $n$ mniejszych kroków
+        \item[] \textbf{Zaleta:} trywialna implementacja, nic nie trzeba zmieniać w detekcji
+        \item[] \textbf{Wada:} koszt rośnie liniowo z $n$, brak gwarancji dla bardzo szybkich obiektów
+      \end{itemize}
+      \symbols{$\Delta t$ -- krok czasowy symulacji; $n$ -- liczba podkroków, na które dzielony jest krok.}
+    \end{column}
+  \end{columns}
+  \src{Ericson 2004.}
+  \nsi{Rysunek}
+\end{frame}
+
+\begin{frame}{Metoda 2: sweep / shape cast}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \centering
+      \begin{tikzpicture}[font=\scriptsize, scale=1.2]
+        \fill[wall] (3.1,-0.1) rectangle (3.4,2.1);
+        \fill[PwrSand!45] (0.5,0.7) rectangle (4.5,1.3);
+        \draw[PwrRed!60, dashed] (0.5,0.7) -- (4.5,0.7) (0.5,1.3) -- (4.5,1.3);
+        \draw[ball] (0.5,1.0) circle (0.3);
+        \draw[ghost] (4.5,1.0) circle (0.3);
+        \draw[ball, fill=PwrRed!35] (2.8,1.0) circle (0.3);
+        \node[PwrRed, font=\bfseries\small, above] at (2.8,1.35) {TOI};
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}\itemsep0.4em
+        \item[] \textbf{Idea:} ,,przeciągnięcie'' kształtu wzdłuż trajektorii i znalezienie chwili uderzenia (TOI)
+        \item[] \textbf{Zaleta:} dokładny moment kontaktu
+        \item[] \textbf{Wada:} zakłada ruch liniowy -- słabo radzi sobie z szybką rotacją
+      \end{itemize}
+      \symbols{TOI (\textit{time of impact}) -- chwila pierwszego kontaktu w obrębie kroku.}
+    \end{column}
+  \end{columns}
+  \src{Ericson 2004; dokumentacja Unity (PhysX), Godot.}
+  \nsi{Rysunek}
+\end{frame}
+
+\begin{frame}{Metoda 3: conservative advancement}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \centering
+      \begin{tikzpicture}[font=\scriptsize, scale=1.2]
+        \fill[wall] (4.2,-0.1) rectangle (4.5,2.1);
+        \draw[ghost] (0.4,1.0) circle (0.3);
+        \draw[ghost] (2.3,1.0) circle (0.3);
+        \draw[ghost] (3.3,1.0) circle (0.3);
+        \draw[ball] (3.85,1.0) circle (0.3);
+        \draw[mv] (0.75,1.0) -- (1.95,1.0);
+        \draw[mv] (2.65,1.0) -- (2.95,1.0);
+        \node[below] at (1.35,0.65) {$d_1$};
+        \node[below] at (2.8,0.65) {$d_2$};
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}\itemsep0.4em
+        \item[] \textbf{Idea:} przesuwaj obiekt o bezpieczną odległość, liczoną z dystansu do przeszkody, aż do kontaktu
+        \item[] \textbf{Zaleta:} nie przegapi kolizji, obsługuje rotację
+        \item[] \textbf{Wada:} wiele iteracji -- koszt rośnie przy wielu szybkich obiektach
+      \end{itemize}
+      \symbols{$d_1, d_2$ -- kolejne bezpieczne przesunięcia, wyznaczane z aktualnej odległości od przeszkody.}
+    \end{column}
+  \end{columns}
+  \src{Mirtich 1996; Zhang i in., ACM TOG 2007.}
+  \nsi{Rysunek}
+\end{frame}
+ 
+\begin{frame}{Metoda 4: speculative contacts}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \centering
+      \begin{tikzpicture}[font=\scriptsize, scale=1.2]
+        \fill[wall] (3.1,-0.1) rectangle (3.4,2.1);
+        \draw[ball] (1.2,1.0) circle (0.3);
+        \draw[ghost] (4.5,1.0) circle (0.3);
+        \draw[mv, dashed] (1.55,1.0) -- (4.15,1.0);
+        \draw[PwrRed, very thick] (1.5,1.0) -- (3.1,1.0);
+        \node[PwrRed, font=\small\bfseries, above] at (2.3,1.15) {kontakt ,,na zapas''};
+        \node[below] at (2.3,0.75) {dystans $\le v\,\Delta t$};
+      \end{tikzpicture}
+      \symbols{$v$ -- prędkość obiektu;\\ $v\,\Delta t$ -- droga pokonywana w jednym kroku.}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}\itemsep0.4em
+        \item[] \textbf{Idea:} kontakt tworzony z wyprzedzeniem, gdy przeszkoda jest w zasięgu ruchu; solver nie pozwala jej przekroczyć
+        \item[] \textbf{Zaleta:} tanie, bez dodatkowych iteracji
+        \item[] \textbf{Wada:} ,,ghost collisions'' -- zatrzymanie przed przeszkodą, której by nie dotknął
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{0.2cm}
+  {\color{PwrRed}\bfseries Każda metoda to inny kompromis:} niezawodność -- koszt -- artefakty
+  \src{Catto, GDC 2013; dokumentacja Box2D, Jolt Physics.}
+  \nsi{Rysunek}
+\end{frame}
+
+% ---- CCD in game engines ----
+\begin{frame}{CCD w silnikach gier}
+  \small
+  \renewcommand{\arraystretch}{1.25}
   \begin{tabular}{@{}lll@{}}
     \toprule
-    \textbf{Kolumna 1} & \textbf{Kolumna 2} & \textbf{Kolumna 3} \\
+    \textbf{Silnik} & \textbf{Ustawienie} & \textbf{Rodzina metod} \\
     \midrule
-    wartość & wartość & wartość \\
-    wartość & wartość & wartość \\
+    Unreal Engine (Chaos) & \texttt{Use CCD} & sweep \\
+    Unity (PhysX) & Continuous / Continuous Dynamic & sweep \\
+                  & Continuous Speculative & speculative \\
+    Godot & \texttt{continuous\_cd}: Cast Ray / Cast Shape & ray / shape cast \\
+    Jolt Physics & Motion Quality: LinearCast & speculative + cast \\
+    Bullet & CCD motion threshold & swept sphere \\
+    \bottomrule
+  \end{tabular}
+  \vspace{0.35cm}
+ 
+  \normalsize
+  {\color{PwrRed}\bfseries Obserwacja:} brak jednej ,,najlepszej'' metody -- dokumentacje mówią, \emph{jak} włączyć CCD, ale nie \emph{ile kosztuje} i \emph{kiedy zawodzi}.
+  \src{dokumentacje Unreal Engine, Unity, Godot, Jolt Physics, Bullet (stan na 2026).}
+\end{frame}
+ 
+% ---- Research problem ----
+\begin{frame}{Problem badawczy}
+  \begin{block}{}
+    \large
+    Brakuje pomiarów zależności między niezawodnością i kosztem obliczeniowym poszczególnych metod CCD i jakie artefakty wprowadzają w symulacji czasu rzeczywistego.
+  \end{block}
+  \vspace{0.3cm}
+  \begin{itemize}\itemsep0.3em
+    \item Badania naukowe nad CCD dotyczą głównie siatek trójkątów i symulacji \emph{offline}
+    \item Porównanie gotowych silników tego nie rozstrzygnie -- różnią się \emph{wszystkim}
+    \item Potrzebny eksperyment, w którym zmienia się \textbf{tylko} metoda CCD
+  \end{itemize}
+  \src{Wang i in., ACM TOG 40(5), 2021.}
+\end{frame}
+ 
+% 7
+\begin{frame}{Cel pracy}
+  \begin{block}{Cel}
+    \large
+    Analiza porównawcza metod ciągłej detekcji kolizji
+    w symulacji fizycznej czasu rzeczywistego.
+  \end{block}
+  \vspace{0.15cm}
+  {\small Miary porównania: \textbf{niezawodność}, \textbf{koszt obliczeniowy}, \textbf{wierność}, \textbf{artefakty}.\par}
+  \vspace{0.3cm}
+  \begin{enumerate}\itemsep0.3em
+    \item Przegląd metod CCD i ich implementacji w silnikach
+    \item Własny mini silnik (stanowisko badawcze) z wymiennym modułem CCD
+    \item Eksperymenty, konfrontacja z silnikami i rekomendacje
+  \end{enumerate}
+\end{frame}
+ 
+% 7a
+\begin{frame}{Rdzeń pracy: własny mini silnik fizyczny}
+  \begin{center}
+  \begin{tikzpicture}[font=\small,
+      box/.style={rounded corners, draw=PwrRed, very thick, fill=PwrRed!8,
+                  minimum width=2.5cm, minimum height=1.0cm, align=center},
+      arr/.style={-{Stealth}, thick, PwrRed}]
+    \node[box] (a) {Integracja\\ ruchu};
+    \node[box, right=0.5cm of a] (b) {Detekcja\\ kolizji};
+    \node[box, right=0.5cm of b, fill=PwrRed!28] (c) {\textbf{Moduł CCD}\\ \footnotesize wymienny};
+    \node[box, right=0.5cm of c] (d) {Solver\\ kontaktów};
+    \draw[arr] (a) -- (b); \draw[arr] (b) -- (c); \draw[arr] (c) -- (d);
+    \draw[arr, SlateGray, dashed] (d.south) -- ++(0,-0.5) -| (a.south);
+  \end{tikzpicture}
+  \end{center}
+  \vspace{0.3cm}
+  \begin{itemize}\itemsep0.3em
+    \item C++, bryły sztywne 3D
+    \item Zmienia się \textbf{tylko} moduł CCD -- reszta symulacji identyczna
+    \item Porównanie według czterech miar: niezawodność, koszt obliczeniowy, wierność, artefakty (definicje na następnym slajdzie)
+  \end{itemize}
+  \nsi{Schemat}
+\end{frame}
+
+% ---- Measures ----
+\begin{frame}{Miary porównania}
+  \small
+  \renewcommand{\arraystretch}{1.35}
+  \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.54\textwidth}l@{}}
+    \toprule
+    \textbf{Miara} & \textbf{Definicja} & \textbf{Jednostka} \\
+    \midrule
+    Niezawodność & odsetek kolizji wykrytych spośród wszystkich kolizji, które zachodzą w scenariuszu (pozostałe to tunelowanie) & \% \\
+    Koszt obliczeniowy & czas obliczeń modułu CCD przypadający na jeden krok symulacji & ms / krok \\
+    Wierność & różnica między wyznaczoną a analityczną chwilą kontaktu & ms \\
+    Artefakty & liczba kontaktów fałszywych (,,ghost collisions''), zmiana pędu po kontakcie & liczba, \% \\
     \bottomrule
   \end{tabular}
 \end{frame}
-
-% ------------------------------------------------------------
+ 
+% ---- Test scenarios ----
+\begin{frame}{Scenariusze testowe}
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.32\textwidth}>{\raggedright\arraybackslash}p{0.31\textwidth}@{}}
+    \toprule
+    \textbf{Scenariusz} & \textbf{Czynniki zmieniane} & \textbf{Co sprawdza} \\
+    \midrule
+    Pocisk vs.\ cienka ściana & prędkość~$v$, grubość przeszkody~$d$ & klasyczne tunelowanie \\
+    Dwa szybkie obiekty & prędkości obiektów $v_1$,~$v_2$ & oba obiekty w ruchu -- trudniejszy przypadek \\
+    Wiele pocisków naraz & liczba obiektów~$N$ & koszt przy dużej liczbie obiektów \\
+    Szybka rotacja & prędkość kątowa~$\omega$ & CCD dla ruchu obrotowego \\
+    Scena mieszana & udział szybkich obiektów~$p$ & kilka szybkich obiektów wśród wolnych \\
+    \bottomrule
+  \end{tabular}
+  \vspace{0.3cm}
+ 
+  {\small\color{SlateGray} Dla prostych kształtów chwilę uderzenia liczę analitycznie -- punkt odniesienia dla wierności.}
+\end{frame}
+ 
+% 8
+\begin{frame}{Pytania badawcze}
+  \Large\setlength{\leftmargini}{2.6em}
+  \begin{enumerate}\itemsep0.7em
+    \item[\textbf{PB1}] Która metoda ma najmniejszy koszt obliczeniowy potrzebny do uzyskania 100\% niezawodności zależnie od prędkości~$v$ i liczby obiektów N?
+    \item[\textbf{PB2}] Jak liczba fałszywych kontaktów wprowadzanych przez poszczególne metody zależy od prędkości~$v$ i prędkości kątowej~$\omega$?
+  \end{enumerate}
+\end{frame}
+ 
+% 9
+\begin{frame}{Hipotezy}
+  \setlength{\leftmargini}{2.2em}
+  \begin{enumerate}\itemsep0.7em
+    \item[\textbf{H1}] (PB1) Dla $\omega = 0$ i $v\,\Delta t > d + s$ \textbf{sweep}
+      wymaga mniejszego kosztu niż \textbf{substepping} przy każdym badanym $N$.
+    \item[\textbf{H2}] (PB1) \textbf{Speculative contacts} nie osiąga niezawodności
+      100\% w co najmniej jednym badanym scenariuszu.
+    \item[\textbf{H3}] (PB2) Liczba fałszywych kontaktów rośnie z $v$ i $\omega$
+      tylko w \textbf{speculative contacts}; w pozostałych metodach wynosi 0.
+  \end{enumerate}
+  \vfill
+  \symbols{$\Delta t$ -- krok czasowy; $d$ [m] -- grubość przeszkody; $s$ [m] -- rozmiar obiektu w~kierunku ruchu;\\
+    $v\,\Delta t > d + s$ -- obiekt w~jednym kroku pokonuje drogę większą niż przeszkoda wraz z~obiektem (możliwe tunelowanie).}
+  \vspace{0.2cm}
+\end{frame}
+ 
+% 10
+\begin{frame}{Zakres prac}
+  \setlength{\leftmargini}{1.6em}
+  \begin{enumerate}\itemsep0.2em
+    \item Przegląd istniejących rozwiązań -- literatura i silniki fizyki
+    \item Wybór metod CCD do analizy w oparciu o przegląd
+    \item Projekt i implementacja mini silnika fizycznego (C++)
+    \item Implementacja wybranych metod jako wymiennych modułów
+    \item Opracowanie scenariuszy testowych i miar porównania
+    \item Eksperymenty; Bullet i Jolt jako punkt odniesienia
+    \item Konfrontacja wyników z Unreal, Unity i Godot
+    \item Analiza wyników i sformułowanie rekomendacji
+  \end{enumerate}
+  \symbols{Ograniczenie: bryły sztywne wypukłe 3D; poza zakresem geometria wklęsła, ciała miękkie i tkaniny, obliczenia na GPU.}
+\end{frame}
+ 
+% 11
 \begin{frame}{Podsumowanie}
   \begin{itemize}\itemsep0.5em
-    \item Najważniejszy wniosek
-    \item Drugi wniosek
+    \item \textbf{Problem:} szybkie obiekty przenikają przez przeszkody
+    \item \textbf{Cel:} analiza porównawcza metod CCD w symulacji czasu rzeczywistego
+    \item \textbf{Narzędzie:} własny mini silnik fizyczny
+    \item \textbf{Efekt:} rekomendacje wyboru metody
   \end{itemize}
   \vspace{0.8cm}
   \begin{center}
     {\Large\color{PwrRed}\bfseries Dziękuję za uwagę!}
   \end{center}
 \end{frame}
-
-% ------------------------------------------------------------
+ 
+% 12
 \begin{frame}{Literatura}
   \footnotesize
   \begin{itemize}\itemsep0.2em
-    \item A. Autor, \textit{Tytuł książki}, Wydawnictwo, rok.
-    \item B. Autor i in., \textit{Tytuł artykułu}, Czasopismo 1(2), rok.
+    \item C. Ericson, \textit{Real-Time Collision Detection}, Morgan Kaufmann, 2004.
+    \item B. Mirtich, \textit{Impulse-based Dynamic Simulation of Rigid Body Systems}, rozprawa doktorska, UC Berkeley, 1996.
+    \item E. Catto, \textit{Continuous Collision}, Game Developers Conference, 2013.
+    \item B. Wang i in., \textit{A Large-scale Benchmark and an Inclusion-based Algorithm for Continuous Collision Detection}, ACM TOG 40(5), 2021.
+    \item X. Zhang i in., \textit{Continuous collision detection for articulated models using Taylor models and temporal culling}, ACM TOG 26(3), 2007.
+    \item Dokumentacja: Box2D, Jolt Physics, Bullet, Unreal Engine (Chaos), Unity (PhysX), Godot.
   \end{itemize}
 \end{frame}
 
-% ------------------------------------------------------------
+% ---- AI use declaration ----
 \begin{frame}{Wykorzystanie narzędzi AI}
   \begin{itemize}\itemsep0.4em
-    \item \textbf{Narzędzie:} ...
-    \item \textbf{Zakres:} ...
+    \item \textbf{Narzędzie:} Claude (Anthropic)
+    \item \textbf{Cele:} rysunki i schematy (TikZ)
+          według instrukcji i treści autora; korekta językowa
     \item \textbf{Oznaczenia:} elementy przygotowane z użyciem NSI opisano w prawym dolnym rogu slajdu
   \end{itemize}
+  \src{Wytyczne dotyczące wykorzystywania narzędzi sztucznej inteligencji w kształceniu, WIT PWr.}
 \end{frame}
 
 \end{document}
